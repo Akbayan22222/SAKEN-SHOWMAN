@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>MEDET SHOW: ФОТО-ЛОТЕРЕЯ</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        body { 
+            background: #000; 
+            color: #fff; 
+            font-family: 'Arial Black', sans-serif; 
+            margin: 0; padding: 0;
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-end; /* Контент снизу */
+            height: 100vh; width: 100vw; overflow: hidden; 
+        }
+
+        /* 1. БРЕНДИНГ: Слева и Сверху */
+        #branding {
+            position: absolute;
+            top: 25px;
+            left: 25px;
+            text-align: left;
+            z-index: 100;
+        }
+        #branding h1 {
+            font-size: 32px;
+            margin: 0;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.7);
+        }
+        #branding p {
+            font-size: 14px;
+            margin: 0; margin-top: 5px;
+            color: gold;
+            text-shadow: 0 0 10px gold;
+            opacity: 0.8;
+        }
+
+        /* 2. ЛЕНТА ГОСТЕЙ: Сверху */
+        #guests-strip {
+            position: absolute;
+            top: 90px; /* Ниже бренда */
+            left: 20px; right: 20px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start; /* Фото копятся слева */
+            gap: 10px;
+            overflow-x: auto; /* Если фото много, появится прокрутка */
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 15px;
+            z-index: 50;
+        }
+        .strip-photo {
+            width: 70px; height: 70px;
+            border-radius: 50%;
+            border: 3px solid #333;
+            object-fit: cover;
+            transition: all 0.3s;
+            animation: fadeInPhoto 0.5s ease-out;
+        }
+        @keyframes fadeInPhoto { from { opacity: 0; transform: scale(0); } to { opacity: 1; transform: scale(1); } }
+
+        /* 3. КАРТОЧКА ПОБЕДИТЕЛЯ (ЦЕНТР) */
+        #winner-card { 
+            text-align: center; 
+            display: none; /* Скрыта по умолчанию */
+            z-index: 200; 
+            position: relative;
+            margin-bottom: 10vh; /* Отступ от низа */
+        }
+        #winner-photo { 
+            width: 350px; 
+            height: 350px; 
+            border-radius: 50%; 
+            border: 15px solid gold; 
+            box-shadow: 0 0 70px rgba(255, 215, 0, 0.8); 
+            object-fit: cover; 
+            animation: winnerIntro 0.5s ease-out;
+        }
+        #winner-name { 
+            font-size: 100px; 
+            color: gold; 
+            margin-top: 25px; 
+            text-transform: uppercase; 
+            text-shadow: 0 0 40px gold;
+        }
+        @keyframes winnerIntro {
+            from { opacity: 0; transform: scale(0.5) translateY(-50px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        /* Анимация мигания в конце */
+        .winner-flash { animation: winFlash 0.3s infinite alternate; }
+        @keyframes winFlash { from { opacity: 1; } to { opacity: 0.7; transform: scale(1.05); } }
+
+    </style>
+</head>
+<body>
+
+    <div id="branding">
+        <h1>MEDET MUHAMEDZHANOV SHOW</h1>
+        <p>КТО СЧАСТЛИВЫЙ ГОСТЬ?</p>
+    </div>
+
+    <div id="guests-strip">
+        </div>
+
+    <div id="winner-card">
+        <h2 style="font-size: 50px; margin-bottom: 10px; text-transform: uppercase;">ПОБЕДИТЕЛЬ!</h2>
+        <img id="winner-photo" src="" alt="Photo">
+        <div id="winner-name"></div>
+    </div>
+
+    <script>
+        const ADMIN_ID = 'medet_luck_2026';
+        const peer = new Peer(ADMIN_ID);
+        let guests = [];
+
+        // Статус связи
+        peer.on('open', () => console.log("Экран лотереи ждет гостей..."));
+
+        // Логика получения данных
+        peer.on('connection', (conn) => {
+            conn.on('data', (data) => {
+                // Если пришло фото нового гостя
+                if (data.name && data.photo) {
+                    guests.push(data); 
+                    addPhotoToStrip(data.photo);
+                }
+                // Если пришла команда "Крутить"
+                if (data.start) startSpin();
+            });
+        });
+
+        // Добавление фото в ленту сверху
+        function addPhotoToStrip(src) {
+            const strip = document.getElementById('guests-strip');
+            const img = document.createElement('img');
+            img.src = src;
+            img.className = 'strip-photo';
+            img.alt = 'Guest';
+            strip.appendChild(img);
+            
+            // Авто-прокрутка в конец ленты
+            strip.scrollLeft = strip.scrollWidth;
+        }
+
+        // Логика закрутки
+        function startSpin() {
+            if (guests.length === 0) return alert("Гостей еще нет!");
+            const card = document.getElementById('winner-card');
+            card.style.display = "block";
+            card.classList.remove('winner-flash'); // Убираем старую анимацию
+
+            let timer = 0;
+            let interval = setInterval(() => {
+                // Выбираем случайного гостя из списка
+                const randomGuest = guests[Math.floor(Math.random() * guests.length)];
+                updateWinnerDisplay(randomGuest);
+                timer += 100;
+                
+                // Крутим 4.5 секунды
+                if (timer > 4500) { 
+                    clearInterval(interval);
+                    // Финальный эффект победителя
+                    card.classList.add('winner-flash');
+                }
+            }, 100);
+        }
+
+        // Обновление фото в центре во время крутилки
+        function updateWinnerDisplay(guest) {
+            document.getElementById('winner-photo').src = guest.photo;
+            document.getElementById('winner-name').innerText = guest.name;
+        }
+    </script>
+</body>
+</html>
