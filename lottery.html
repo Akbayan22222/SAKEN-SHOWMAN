@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>SAKEN SHOW: ЛОТЕРЕЯ</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        body { background: #000; color: #fff; font-family: 'Arial Black', sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100vh; overflow: hidden; }
+        #branding { position: absolute; top: 25px; left: 25px; text-align: left; }
+        #branding h1 { font-size: 35px; margin: 0; color: gold; text-transform: uppercase; text-shadow: 0 0 15px gold; }
+        #guests-strip { position: absolute; top: 100px; left: 20px; right: 20px; height: 100px; display: flex; gap: 10px; overflow-x: hidden; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 15px; }
+        .strip-photo { width: 70px; height: 70px; border-radius: 50%; border: 2px solid gold; object-fit: cover; animation: fadeIn 0.5s; }
+        #winner-card { text-align: center; display: none; margin-bottom: 10vh; }
+        #winner-photo { width: 350px; height: 350px; border-radius: 50%; border: 15px solid gold; box-shadow: 0 0 50px gold; object-fit: cover; }
+        #winner-name { font-size: 80px; color: gold; margin-top: 20px; text-shadow: 0 0 30px gold; }
+        @keyframes fadeIn { from { transform: scale(0); } to { transform: scale(1); } }
+        .flash { animation: flash 0.3s infinite alternate; }
+        @keyframes flash { from { opacity: 1; } to { opacity: 0.5; } }
+    </style>
+</head>
+<body>
+    <div id="branding"><h1>SAKEN SHOW</h1><p>КТО СЧАСТЛИВЫЙ ГОСТЬ?</p></div>
+    <div id="guests-strip"></div>
+    <div id="winner-card">
+        <h2 style="font-size: 40px;">ПОБЕДИТЕЛЬ!</h2>
+        <img id="winner-photo" src=""><div id="winner-name"></div>
+    </div>
+
+    <script>
+        const ADMIN_ID = 'medet_luck_2026';
+        const peer = new Peer(ADMIN_ID);
+        let guests = [];
+
+        peer.on('connection', (conn) => {
+            conn.on('data', (data) => {
+                if (data.name && data.photo) {
+                    guests.push(data);
+                    const img = document.createElement('img');
+                    img.src = data.photo; img.className = 'strip-photo';
+                    document.getElementById('guests-strip').appendChild(img);
+                }
+                if (data.start) startSpin();
+            });
+        });
+
+        function startSpin() {
+            if (guests.length === 0) return;
+            const card = document.getElementById('winner-card');
+            card.style.display = "block";
+            let timer = 0;
+            let interval = setInterval(() => {
+                const g = guests[Math.floor(Math.random() * guests.length)];
+                document.getElementById('winner-photo').src = g.photo;
+                document.getElementById('winner-name').innerText = g.name;
+                timer += 100;
+                if (timer > 4000) { clearInterval(interval); card.classList.add('flash'); }
+            }, 100);
+        }
+    </script>
+</body>
+</html>
