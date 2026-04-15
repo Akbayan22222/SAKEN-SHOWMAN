@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>MEDET IBADULLA: ФОТО-ЛОТЕРЕЯ</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        body { 
+            background: #000; 
+            color: #fff; 
+            font-family: 'Arial Black', sans-serif; 
+            margin: 0; padding: 0;
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-end; 
+            height: 100vh; width: 100vw; overflow: hidden; 
+        }
+
+        #branding {
+            position: absolute;
+            top: 25px;
+            left: 25px;
+            text-align: left;
+            z-index: 100;
+        }
+        #branding h1 {
+            font-size: 32px;
+            margin: 0;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.7);
+        }
+        #branding p {
+            font-size: 14px;
+            margin: 0; margin-top: 5px;
+            color: gold;
+            text-shadow: 0 0 10px gold;
+            opacity: 0.8;
+        }
+
+        #guests-strip {
+            position: absolute;
+            top: 90px;
+            left: 20px; right: 20px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 10px;
+            overflow-x: auto;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 15px;
+            z-index: 50;
+        }
+        .strip-photo {
+            width: 70px; height: 70px;
+            border-radius: 50%;
+            border: 3px solid #333;
+            object-fit: cover;
+            animation: fadeInPhoto 0.5s ease-out;
+        }
+        @keyframes fadeInPhoto { from { opacity: 0; transform: scale(0); } to { opacity: 1; transform: scale(1); } }
+
+        #winner-card { 
+            text-align: center; 
+            display: none; 
+            z-index: 200; 
+            position: relative;
+            margin-bottom: 10vh;
+        }
+        #winner-photo { 
+            width: 350px; 
+            height: 350px; 
+            border-radius: 50%; 
+            border: 15px solid gold; 
+            box-shadow: 0 0 70px rgba(255, 215, 0, 0.8); 
+            object-fit: cover; 
+            animation: winnerIntro 0.5s ease-out;
+        }
+        #winner-name { 
+            font-size: 100px; 
+            color: gold; 
+            margin-top: 25px; 
+            text-transform: uppercase; 
+            text-shadow: 0 0 40px gold;
+        }
+        @keyframes winnerIntro {
+            from { opacity: 0; transform: scale(0.5) translateY(-50px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .winner-flash { animation: winFlash 0.3s infinite alternate; }
+        @keyframes winFlash { from { opacity: 1; } to { opacity: 0.7; transform: scale(1.05); } }
+    </style>
+</head>
+<body>
+
+    <div id="branding">
+        <h1>MEDET IBADULLA SHOW</h1>
+        <p>КТО СЧАСТЛИВЫЙ ГОСТЬ?</p>
+    </div>
+
+    <div id="guests-strip"></div>
+
+    <div id="winner-card">
+        <h2 style="font-size: 50px; margin-bottom: 10px; text-transform: uppercase;">ПОБЕДИТЕЛЬ!</h2>
+        <img id="winner-photo" src="" alt="Photo">
+        <div id="winner-name"></div>
+    </div>
+
+    <script>
+        const ADMIN_ID = 'medet_ibadulla_luck_2026';
+        const peer = new Peer(ADMIN_ID);
+        let guests = [];
+
+        peer.on('open', () => console.log("Экран лотереи Медета Ибадулла готов..."));
+
+        peer.on('connection', (conn) => {
+            conn.on('data', (data) => {
+                if (data.name && data.photo) {
+                    guests.push(data); 
+                    addPhotoToStrip(data.photo);
+                }
+                if (data.start) startSpin();
+            });
+        });
+
+        function addPhotoToStrip(src) {
+            const strip = document.getElementById('guests-strip');
+            const img = document.createElement('img');
+            img.src = src;
+            img.className = 'strip-photo';
+            strip.appendChild(img);
+            strip.scrollLeft = strip.scrollWidth;
+        }
+
+        function startSpin() {
+            if (guests.length === 0) return;
+            const card = document.getElementById('winner-card');
+            card.style.display = "block";
+            card.classList.remove('winner-flash');
+
+            let timer = 0;
+            let interval = setInterval(() => {
+                const randomGuest = guests[Math.floor(Math.random() * guests.length)];
+                updateWinnerDisplay(randomGuest);
+                timer += 100;
+                
+                if (timer > 4500) { 
+                    clearInterval(interval);
+                    card.classList.add('winner-flash');
+                }
+            }, 100);
+        }
+
+        function updateWinnerDisplay(guest) {
+            document.getElementById('winner-photo').src = guest.photo;
+            document.getElementById('winner-name').innerText = guest.name;
+        }
+    </script>
+</body>
+</html>
