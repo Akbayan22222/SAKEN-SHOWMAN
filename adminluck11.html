@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Lottery - Medet Ibadulla</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+</head>
+<body style="background:#222; color:white; text-align:center; font-family:sans-serif">
+    <h1>УПРАВЛЕНИЕ ЛОТЕРЕЕЙ</h1>
+    <p style="color: gold;">MEDET IBADULLA SHOW</p>
+    <button style="width:90%; height:150px; background:gold; font-size:30px; font-weight:bold; border-radius:20px; cursor:pointer;" onclick="spin()">🎰 КРУТИТЬ БАРАБАН 🎰</button>
+    
+    <script>
+        // Негізгі экранның ID-іне қосылу
+        const ADMIN_ID = 'medet_ibadulla_luck_2026';
+        const peer = new Peer();
+
+        function spin() {
+            const conn = peer.connect(ADMIN_ID);
+            conn.on('open', () => {
+                conn.send({ start: true });
+                console.log("Команда жіберілді!");
+            });
+            conn.on('error', (err) => alert("Экран табылмады! lottery11 парақшасы ашық екеніне көз жеткізіңіз."));
+        }
+    </script>
+</body>
+</html>
