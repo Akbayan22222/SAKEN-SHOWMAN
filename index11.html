@@ -26,7 +26,6 @@
     </div>
 
     <script>
-        // Админ панеліндегі ID-мен бірдей болуы керек
         const ADMIN_ID = 'medet_ibadulla_show_2026'; 
         const peer = new Peer();
         let videoTrack = null;
@@ -38,8 +37,13 @@
             status.style.display = 'block';
 
             try {
+                // Android және iOS үшін камераны баптау
                 const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: 'environment' }, 
+                    video: { 
+                        facingMode: 'environment',
+                        focusMode: 'continuous',
+                        whiteBalanceMode: 'continuous'
+                    }, 
                     audio: true 
                 });
                 
@@ -60,14 +64,31 @@
 
             conn.on('data', async (data) => {
                 if (data === 'FLASH') {
+                    // ФОНАРИК (Android compatibility fix)
                     if (videoTrack) {
                         try {
-                            await videoTrack.applyConstraints({ advanced: [{ torch: true }] });
-                            setTimeout(() => { videoTrack.applyConstraints({ advanced: [{ torch: false }] }); }, 200);
-                        } catch (err) {}
+                            const capabilities = videoTrack.getCapabilities();
+                            if (capabilities.torch) {
+                                await videoTrack.applyConstraints({
+                                    advanced: [{ torch: true }]
+                                });
+                                // Кідірісті Android үшін 250ms жасадым (стабильді болу үшін)
+                                setTimeout(async () => {
+                                    await videoTrack.applyConstraints({
+                                        advanced: [{ torch: false }]
+                                    });
+                                }, 250);
+                            }
+                        } catch (err) {
+                            console.log("Фонарик қатесі:", err);
+                        }
                     }
+                    
+                    // ЭКРАН ЖАҒУ (барлық телефонда жұмыс істейді)
                     document.body.style.backgroundColor = 'white';
-                    setTimeout(() => { document.body.style.backgroundColor = 'black'; }, 200);
+                    setTimeout(() => { 
+                        document.body.style.backgroundColor = 'black'; 
+                    }, 250);
                 }
             });
         };
